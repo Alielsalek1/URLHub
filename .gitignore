@@ -15,3 +15,5 @@ obj/
 # Ignore OS-generated files
 .DS_Store
 Thumbs.db
+
+DB Tables.txt
