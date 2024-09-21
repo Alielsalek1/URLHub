@@ -1,0 +1,17 @@
+# Ignore build artifacts
+bin/
+obj/
+
+# Ignore Visual Studio files
+.vs/
+*.csproj.user
+*.suo
+
+# Ignore logs and temporary files
+*.log
+*.tmp
+*.bak
+
+# Ignore OS-generated files
+.DS_Store
+Thumbs.db
