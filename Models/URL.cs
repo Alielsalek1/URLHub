@@ -1,11 +1,7 @@
-﻿namespace URLshortner.Models
-{
-    public class URL
-    {
-        private int _ID;
-        private string? _Url;
+﻿namespace URLshortner.Models;
 
-        public int ID { get { return _ID; } set { _ID = value; } }
-        public string? Url { get { return _Url; } set { _Url = value; } }
-    }
+public class URL
+{
+    public int? ID { get; set; }
+    public string? Url { get; set; }
 }

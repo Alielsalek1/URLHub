@@ -1,10 +1,10 @@
 using ALL.Database;
 using Microsoft.EntityFrameworkCore;
 using URLshortner.Controllers;
+using URLshortner.Repositories;
+using URLshortner.Validators;
 
 var builder = WebApplication.CreateBuilder(args);
-
-// Add services to the container.
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -13,8 +13,18 @@ builder.Services.AddSwaggerGen();
 
 // Add Database
 builder.Services.AddDbContext<AppDbContext>(
-        bd => bd.UseSqlServer("server=LEGIONFORELSALE;database=URLDB;integrated security=true;trust server certificate=True;")
+     bd => bd.UseSqlServer("server=LEGIONFORELSALE;database=URLDB;integrated security=true;trust server certificate=True;")
 );
+
+// Add Database repositories
+builder.Services.AddScoped<UserRepository>();
+builder.Services.AddScoped<FriendRepository>();
+builder.Services.AddScoped<URLRepository>();
+
+// Add Validators
+builder.Services.AddScoped<UserValidator>();
+builder.Services.AddScoped<FriendValidator>();
+builder.Services.AddScoped<URLValidator>();
 
 var app = builder.Build();
 
