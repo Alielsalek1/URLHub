@@ -13,6 +13,8 @@ public enum SEX
     DIKA
 }
 
+//TODO: make the usernames unique
+
 public class User
 {
     public int ID { get; set; }

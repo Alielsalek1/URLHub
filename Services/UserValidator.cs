@@ -1,7 +1,7 @@
 ﻿using System.Text.RegularExpressions;
 using URLshortner.Models;
 
-namespace URLshortner.Validators;
+namespace URLshortner.Services;
 
 public class UserValidator
 {

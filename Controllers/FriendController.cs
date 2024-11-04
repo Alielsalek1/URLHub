@@ -1,12 +1,12 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using URLshortner.Models;
 using URLshortner.Repositories;
-using URLshortner.Validators;
+using URLshortner.Services;
 
 namespace URLshortner.Controllers;
 
 [ApiController]
-[Route("[controller]")]
+[Route("api/[controller]")]
 public class friendController(FriendRepository repository, UserRepository useRepository, FriendValidator validator) : ControllerBase
 {
     public FriendValidator _validator = validator;

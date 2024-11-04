@@ -1,22 +1,23 @@
 using ALL.Database;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using URLshortner.Models;
 using URLshortner.Repositories;
-using URLshortner.Validators;
+using URLshortner.Services;
 
 namespace URLshortner.Controllers;
 
 [ApiController]
-[Route("[controller]")]
+[Route("api/[controller]")]
 public class userController(UserRepository repository, UserValidator validator) : ControllerBase
 {
     private readonly UserRepository _repository = repository;
     private readonly UserValidator _validator = validator;
     [HttpPost]
     [Route("")]
-    public async Task<ActionResult<string>> AddUser([FromBody] User? user)
+    public async Task<ActionResult<string>> SignUp([FromBody] User? user)
     {
         if (!ModelState.IsValid || !_validator.IsValidUser(user))
         {
@@ -28,8 +29,10 @@ public class userController(UserRepository repository, UserValidator validator) 
 
         return Ok(($"User with ID {user.ID} was added successfully."));
     }
+
     [HttpDelete]
     [Route("{ID}")]
+    [Authorize]
     public async Task<ActionResult<string>> DeleteUser(int? ID)
     {
         if (!ModelState.IsValid)
@@ -48,10 +51,13 @@ public class userController(UserRepository repository, UserValidator validator) 
 
         return Ok(($"User with ID {ID} was Deleted successfully."));
     }
+
     [HttpGet]
     [Route("{id}")]
+    [Authorize]
     public async Task<ActionResult<User>> GetUser(int? id)
     {
+        Console.WriteLine("hhhhh");
         if (!ModelState.IsValid)
         {
             return BadRequest("Invalid Credentials");
@@ -69,8 +75,10 @@ public class userController(UserRepository repository, UserValidator validator) 
             User = user 
         });
     }
+
     [HttpPut]
     [Route("{id}")]
+    [Authorize]
     public async Task<ActionResult<string>> UpdateUser(int? id, [FromBody] User? NewUser)
     {
         if (!ModelState.IsValid || !_validator.IsValidUser(NewUser))

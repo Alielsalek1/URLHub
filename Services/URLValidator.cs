@@ -1,7 +1,7 @@
 ﻿using System.Data.SqlTypes;
 using URLshortner.Models;
 
-namespace URLshortner.Validators;
+namespace URLshortner.Services;
 
 public class URLValidator
 {

@@ -1,12 +1,13 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using URLshortner.Models;
 using URLshortner.Repositories;
-using URLshortner.Validators;
+using URLshortner.Services;
 
 namespace URLshortner.Controllers;
 
 [ApiController]
-[Route("[controller]")]
+[Route("api/[controller]")]
 public class urlController(URLRepository repository, UserRepository userRepository, URLValidator validator) : ControllerBase
 {
     private readonly URLRepository _repository = repository;
@@ -15,7 +16,8 @@ public class urlController(URLRepository repository, UserRepository userReposito
 
     [HttpGet]
     [Route("{id}")]
-    public async Task<ActionResult<List<URL>>> GetMyURLs(int? id)
+    [Authorize]
+    public async Task<IActionResult> GetMyURLs(int? id)
     {
         if (!ModelState.IsValid)
         {
@@ -34,7 +36,8 @@ public class urlController(URLRepository repository, UserRepository userReposito
 
     [HttpPost]
     [Route("")]
-    public async Task<ActionResult<string>> AddURL([FromBody] URL url)
+    [Authorize]
+    public async Task<IActionResult> AddURL([FromBody] URL url)
     {
         if (!ModelState.IsValid || !_validator.IsValidURL(url))
         {
@@ -57,7 +60,8 @@ public class urlController(URLRepository repository, UserRepository userReposito
 
     [HttpDelete]
     [Route("")]
-    public async Task<ActionResult<string>> RemoveURL([FromBody] URL? url)
+    [Authorize]
+    public async Task<IActionResult> RemoveURL([FromBody] URL? url)
     {
         if (!ModelState.IsValid || !_validator.IsValidURL(url))
         {
