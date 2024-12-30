@@ -9,9 +9,9 @@ namespace URLshortner.Controllers;
 [Route("api/[controller]")]
 public class friendController(FriendRepository repository, UserRepository useRepository, FriendValidator validator) : ControllerBase
 {
-    public FriendValidator _validator = validator;
-    public UserRepository _userRepository = useRepository;
-    public FriendRepository _repository = repository;
+    private FriendValidator _validator = validator;
+    private UserRepository _userRepository = useRepository;
+    private FriendRepository _repository = repository;
 
     [HttpPost]
     [Route("")]
@@ -22,28 +22,28 @@ public class friendController(FriendRepository repository, UserRepository useRep
             return BadRequest("Invalid Credentials");
         }
 
-        var IsUser1Found = await _userRepository.GetUserById(friend.ID1);
-        var IsUser2Found = await _userRepository.GetUserById(friend.ID2);
+        var IsUser1Found = await _userRepository.GetUserById(friend.ID);
+        var IsUser2Found = await _userRepository.GetUserById(friend.FriendID);
 
         if (IsUser1Found == null)
         {
-            return NotFound($"User with ID {friend.ID1} isn't registered");
+            return NotFound($"User with ID {friend.ID} isn't registered");
         }
         if (IsUser2Found == null)
         {
-            return NotFound($"User with ID {friend.ID2} isn't registered");
+            return NotFound($"User with ID {friend.FriendID} isn't registered");
         }
 
         var IsFriends = await _repository.GetFriend(friend);
 
         if (IsFriends != null)
         {
-            return NotFound($"Users with IDs {friend.ID1} and {friend.ID2} are already friends");
+            return NotFound($"Users with IDs {friend.ID} and {friend.FriendID} are already friends");
         }
 
         await _repository.AddFriend(friend);
 
-        return Ok($"Friends for users {friend.ID1} & {friend.ID2} were added successfully");
+        return Ok($"Friends for users {friend.ID} & {friend.FriendID} were added successfully");
     }
     [HttpGet]
     [Route("{id}")]
@@ -74,27 +74,27 @@ public class friendController(FriendRepository repository, UserRepository useRep
             return BadRequest("Invalid Credentials");
         }
 
-        var IsUser1Found = await _userRepository.GetUserById(friend.ID1);
-        var IsUser2Found = await _userRepository.GetUserById(friend.ID2);
+        var IsUser1Found = await _userRepository.GetUserById(friend.ID);
+        var IsUser2Found = await _userRepository.GetUserById(friend.FriendID);
 
         if (IsUser1Found == null)
         {
-            return NotFound($"User with ID {friend.ID1} isn't registered");
+            return NotFound($"User with ID {friend.ID} isn't registered");
         }
         if (IsUser2Found == null)
         {
-            return NotFound($"User with ID {friend.ID2} isn't registered");
+            return NotFound($"User with ID {friend.FriendID} isn't registered");
         }
 
         var IsFriends = await _repository.GetFriend(friend);
 
         if (IsFriends == null)
         {
-            return NotFound($"Users with IDs {friend.ID1} and {friend.ID2} are not even friends");
+            return NotFound($"Users with IDs {friend.ID} and {friend.FriendID} are not even friends");
         }
 
         await _repository.RemoveFriend(friend);
 
-        return Ok($"Users with IDs {friend.ID1} and {friend.ID2} are not friends anymore");
+        return Ok($"Users with IDs {friend.ID} and {friend.FriendID} are not friends anymore");
     }
 }

@@ -8,10 +8,9 @@ namespace URLshortner.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class urlController(URLRepository repository, UserRepository userRepository, URLValidator validator) : ControllerBase
+public class urlController(URLRepository repository, UserRepository userRepository) : ControllerBase
 {
     private readonly URLRepository _repository = repository;
-    private readonly URLValidator _validator = validator;
     private readonly UserRepository _userRepository = userRepository;
 
     [HttpGet]
@@ -39,7 +38,7 @@ public class urlController(URLRepository repository, UserRepository userReposito
     [Authorize]
     public async Task<IActionResult> AddURL([FromBody] URL url)
     {
-        if (!ModelState.IsValid || !_validator.IsValidURL(url))
+        if (!ModelState.IsValid)
         {
             return BadRequest("Invalid Credentials");
         }
@@ -63,7 +62,7 @@ public class urlController(URLRepository repository, UserRepository userReposito
     [Authorize]
     public async Task<IActionResult> RemoveURL([FromBody] URL? url)
     {
-        if (!ModelState.IsValid || !_validator.IsValidURL(url))
+        if (!ModelState.IsValid)
         {
             return BadRequest("Invalid Credentials");
         }

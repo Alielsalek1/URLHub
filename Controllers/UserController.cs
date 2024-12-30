@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using URLshortner.Dtos;
 using URLshortner.Models;
 using URLshortner.Repositories;
 using URLshortner.Services;
@@ -10,91 +11,74 @@ using URLshortner.Services;
 namespace URLshortner.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
-public class userController(UserRepository repository, UserValidator validator) : ControllerBase
+[Route("/user")]
+public class UserController(UserService userService) : ControllerBase
 {
-    private readonly UserRepository _repository = repository;
-    private readonly UserValidator _validator = validator;
-    [HttpPost]
-    [Route("")]
-    public async Task<ActionResult<string>> SignUp([FromBody] User? user)
-    {
-        if (!ModelState.IsValid || !_validator.IsValidUser(user))
-        {
-            return BadRequest("Invalid Credentials");
-        }
-
-        user.ID = 0;
-        await _repository.AddUser(user);
-
-        return Ok(($"User with ID {user.ID} was added successfully."));
-    }
-
     [HttpDelete]
-    [Route("{ID}")]
+    [Route("/me")]
     [Authorize]
-    public async Task<ActionResult<string>> DeleteUser(int? ID)
+    public async Task<ActionResult<string>> DeleteUser()
     {
-        if (!ModelState.IsValid)
+        var userIdString = User.FindFirst("sub")?.Value;
+        int userId;
+        if (int.TryParse(userIdString, out userId))
         {
-            return BadRequest("Invalid Credentials.");
+            try
+            {
+                await userService.RemoveUser(userId);
+                return Ok("User deleted successfully");
+            }
+            catch (Exception ex)
+            {
+                return NotFound(ex.Message);
+            }
+            
         }
-
-        var IsUserFound = await _repository.GetUserById(ID);
-
-        if (IsUserFound == null)
+        else
         {
-            return NotFound($"User with ID {ID} not found.");
+            return BadRequest("Invalid UserId");
         }
-
-        await _repository.RemoveUser(ID);
-
-        return Ok(($"User with ID {ID} was Deleted successfully."));
     }
 
     [HttpGet]
-    [Route("{id}")]
+    [Route("/{id}")]
     [Authorize]
-    public async Task<ActionResult<User>> GetUser(int? id)
+    public async Task<ActionResult<User>> GetUser(int id)
     {
-        Console.WriteLine("hhhhh");
-        if (!ModelState.IsValid)
+        try
         {
-            return BadRequest("Invalid Credentials");
+            var user = userService.GetUserById(id);
+            return Ok(user);
         }
-
-        User? user = await _repository.GetUserById(id);
-
-        if (user == null)
+        catch (Exception ex)
         {
-            return NotFound($"User with ID {id} nof found");
+            return NotFound(ex.Message);
         }
-
-        return Ok(new {
-            Message = $"User with ID {id} retrieved successfully.",
-            User = user 
-        });
     }
 
     [HttpPut]
-    [Route("{id}")]
+    [Route("/me")]
     [Authorize]
-    public async Task<ActionResult<string>> UpdateUser(int? id, [FromBody] User? NewUser)
+    public async Task<ActionResult<string>> UpdateUser([FromBody] UpdateUserRequestDto dto)
     {
-        if (!ModelState.IsValid || !_validator.IsValidUser(NewUser))
+        var userIdString = User.FindFirst("sub")?.Value;
+        int userId;
+        if (int.TryParse(userIdString, out userId))
         {
-            return BadRequest("Invalid Credentials");
+            try
+            {
+                await userService.UpdateUser(userId, dto);
+                return Ok("User updated successfully");
+            }
+            catch (Exception ex)
+            {
+                return NotFound(ex.Message);
+            }
+            
         }
-
-        var IsUserFound = await _repository.GetUserById(id);
-
-        if (IsUserFound == null)
+        else
         {
-            return NotFound($"User with ID {id} not found.");
+            return BadRequest("Invalid UserId");
         }
-
-        await _repository.UpdateUser(id, NewUser);
-
-        return Ok($"User with ID {id} updated Successfully.");
     }
 }

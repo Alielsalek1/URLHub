@@ -10,13 +10,13 @@ using System.Text;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // Add Database
 builder.Services.AddDbContext<AppDbContext>(
-     bd => bd.UseSqlServer("server=LEGIONFORELSALE;database=URLDB;integrated security=true;trust server certificate=True;")
+     bd => bd.UseSqlServer(
+         "server=LEGIONFORELSALE;database=URLDB;integrated security=true;trust server certificate=True;")
 );
 
 // Add Database repositories
@@ -25,10 +25,9 @@ builder.Services.AddScoped<FriendRepository>();
 builder.Services.AddScoped<URLRepository>();
 
 // Add Services
-builder.Services.AddScoped<UserValidator>();
-builder.Services.AddScoped<FriendValidator>();
-builder.Services.AddScoped<URLValidator>();
 builder.Services.AddScoped<TokenGenerator>();
+builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<UserService>();
 
 var jwtSettings = builder.Configuration;
 builder.Services.AddAuthentication(options =>
@@ -44,8 +43,8 @@ builder.Services.AddAuthentication(options =>
         ValidateAudience = false,
         ValidateIssuerSigningKey = true,
         ValidateLifetime = true,
-        //ValidIssuer = jwtSettings["JwtSettings:Issuer"],
-        //ValidAudience = jwtSettings["JwtSettings:Audience"],
+        ValidIssuer = jwtSettings["JwtSettings:Issuer"],
+        ValidAudience = jwtSettings["JwtSettings:Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["JwtSettings:SecretKey"]))
     };
 });

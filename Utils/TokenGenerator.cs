@@ -21,8 +21,8 @@ namespace URLshortner.Services
 
             var claims = new List<Claim>
             {
-                new Claim(JwtRegisteredClaimNames.Sub, user.ID.ToString()),     
-                new Claim("role", user.Role.ToString())
+                new Claim(JwtRegisteredClaimNames.Sub, user.ID.ToString()),
+                new Claim(JwtRegisteredClaimNames.Name, user.Username)
             };
 
             var mins = int.Parse(_configuration["JwtSettings:DurationInMinutes"]);

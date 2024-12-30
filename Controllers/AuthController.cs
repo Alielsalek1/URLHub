@@ -1,38 +1,43 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Runtime.CompilerServices;
-using System.Security.Claims;
-using System.Text;
-using URLshortner.Models;
-using URLshortner.Repositories;
-using static System.Runtime.InteropServices.JavaScript.JSType;
+using URLshortner.Dtos;
 using URLshortner.Services;
+using URLshortner.Exceptions; // Importing custom exceptions
 
 namespace URLshortner.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
-public class AuthController(TokenGenerator tokenGenerator, UserRepository repository) : ControllerBase
+[Route("auth")]
+public class AuthController(AuthService authService) : ControllerBase
 {
-    private readonly UserRepository _repository = repository;
-    private readonly TokenGenerator _tokenGenerator = tokenGenerator;
+    private readonly AuthService _authService = authService ?? throw new ArgumentNullException(nameof(authService));
 
     [HttpPost]
-    [Route("")]
-    public async Task<IActionResult> login(string Username, string Password)
+    [Route("login")]
+    public async Task<IActionResult> Login([FromBody] AuthRequestDto dto)
     {
-        var curUser = await _repository.GetUserByUsername(Username);
-        if (curUser == null || curUser.Password != Password)
+        try
         {
-            return BadRequest("Invalid Credentials");
+            var token = await _authService.Login(dto);
+            return Ok(new { token, message = "Login successful" });
         }
-
-        var token = _tokenGenerator.GenerateJwtToken(curUser);
-
-        Console.WriteLine($"Generated Token: {token}");
-
-        return Ok(token);
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { Error = "An unexpected error occurred", Details = ex.Message });
+        }
     }
 
+    [HttpPost]
+    [Route("register")]
+    public async Task<IActionResult> Register([FromBody] AuthRequestDto dto)
+    {
+        try
+        {
+            var message = await _authService.Register(dto);
+            return Ok(new { message = message, status = "Registration successful" });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { Error = "An unexpected error occurred", Details = ex.Message });
+        }
+    }
 }

@@ -36,10 +36,9 @@ public class UserRepository(AppDbContext context)
     public async Task UpdateUser(int? ID, User? user)
     {
         var curUser = await GetUserById(ID);
-        if (curUser != null)
-        {
-            curUser = user;
-            await _context.SaveChangesAsync();
-        }
+        
+        curUser.Username = user.Username;
+        curUser.Password = user.Password;
+        await _context.SaveChangesAsync();
     }
 }

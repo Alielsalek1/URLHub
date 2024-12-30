@@ -6,9 +6,9 @@ public class FriendValidator
 {
     public bool IsValidFriend(Friend? friend)
     {
-        return IsValidID(friend.ID1) &&
-            IsValidID(friend.ID2) &&
-            friend.ID1 != friend.ID2;
+        return IsValidID(friend.ID) &&
+            IsValidID(friend.FriendID) &&
+            friend.ID != friend.FriendID;
     }
     public bool IsValidID(int? ID)
     {

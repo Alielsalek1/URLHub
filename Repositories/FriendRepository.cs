@@ -14,14 +14,14 @@ public class FriendRepository(AppDbContext context)
     public async Task<List<int>> GetFriendsById(int? id)
     {
         var friendPairs = await _context.Friends
-            .Where(u => u.ID1 == id || u.ID2 == id)
+            .Where(u => u.ID == id || u.FriendID == id)
             .ToListAsync();
         List<int> friends = new List<int>();
         foreach (var pair in friendPairs)
         {
             if (pair == null) continue;
-            if (pair.ID1 == id) friends.Add((int)pair.ID2);
-            else friends.Add((int)pair.ID1);
+            if (pair.ID == id) friends.Add((int)pair.FriendID);
+            else friends.Add((int)pair.ID);
         }
         return friends;
     }
@@ -35,9 +35,9 @@ public class FriendRepository(AppDbContext context)
     public async Task<Friend> GetFriend(Friend? friend)
     {
         var cur1 = await _context.Friends
-                                   .FirstOrDefaultAsync(u => friend.ID1 == u.ID1 && friend.ID2 == u.ID2);
+                                   .FirstOrDefaultAsync(u => friend.ID == u.ID && friend.FriendID == u.FriendID);
         var cur2 = await _context.Friends
-                                   .FirstOrDefaultAsync(u => friend.ID1 == u.ID2 && friend.ID2 == u.ID1);
+                                   .FirstOrDefaultAsync(u => friend.ID == u.FriendID && friend.FriendID == u.ID);
         return (cur1 ?? cur2);
     }
 

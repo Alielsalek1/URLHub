@@ -16,7 +16,7 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
     public DbSet<User> Users { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<Friend>().HasKey(u => new {u.ID1, u.ID2});
+        modelBuilder.Entity<Friend>().HasKey(u => new { ID1 = u.ID, ID2 = u.FriendID});
         modelBuilder.Entity<URL>().HasKey(u => new {u.ID, u.Url});
         modelBuilder.Entity<User>().HasKey("ID");
     }
