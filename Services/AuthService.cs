@@ -26,7 +26,7 @@ public class AuthService(UserRepository userRepository, TokenGenerator tokenGene
         return token;
     }
     
-    public async Task<string> Register(AuthRequestDto dto)
+    public async Task Register(AuthRequestDto dto)
     {
         if (await _userRepository.GetUserByUsername(dto.username) != null)
         {
@@ -40,7 +40,5 @@ public class AuthService(UserRepository userRepository, TokenGenerator tokenGene
         };
 
         await _userRepository.AddUser(newUser);
-        
-        return "User Created Successfully";
     }
 }

@@ -14,7 +14,7 @@ public class UserRepository(AppDbContext context)
         return await _context.Users.FirstOrDefaultAsync(u => u.ID == ID);
     }
 
-    public async Task<User> GetUserByUsername(string Username)
+    public async Task<User> GetUserByUsername(string? Username)
     {
         return await _context.Users.FirstOrDefaultAsync(u => u.Username == Username);
     }
@@ -24,15 +24,7 @@ public class UserRepository(AppDbContext context)
         await _context.Users.AddAsync(user);
         await _context.SaveChangesAsync();
     }
-    public async Task RemoveUser(int? ID)
-    {
-        var curUser = await GetUserById(ID);
-        if (curUser != null)
-        {
-            _context.Users.Remove(curUser);
-            await _context.SaveChangesAsync();
-        }
-    }
+    
     public async Task UpdateUser(int? ID, User? user)
     {
         var curUser = await GetUserById(ID);

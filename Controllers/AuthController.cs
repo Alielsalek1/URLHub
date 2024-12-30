@@ -1,15 +1,20 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using URLshortner.Dtos;
 using URLshortner.Services;
-using URLshortner.Exceptions; // Importing custom exceptions
+using URLshortner.Exceptions;
 
 namespace URLshortner.Controllers;
 
 [ApiController]
-[Route("auth")]
-public class AuthController(AuthService authService) : ControllerBase
+[Route("/auth")]
+public class AuthController : ControllerBase
 {
-    private readonly AuthService _authService = authService ?? throw new ArgumentNullException(nameof(authService));
+    private readonly AuthService _authService;
+
+    public AuthController(AuthService authService)
+    {
+        _authService = authService ?? throw new ArgumentNullException(nameof(authService));
+    }
 
     [HttpPost]
     [Route("login")]
@@ -18,11 +23,13 @@ public class AuthController(AuthService authService) : ControllerBase
         try
         {
             var token = await _authService.Login(dto);
-            return Ok(new { token, message = "Login successful" });
+            var response = new ApiResponse(token, "Login successful", 200);
+            return Ok(response);
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new { Error = "An unexpected error occurred", Details = ex.Message });
+            var response = new ApiResponse(ex.Message, 500);
+            return StatusCode(500, response);
         }
     }
 
@@ -32,12 +39,14 @@ public class AuthController(AuthService authService) : ControllerBase
     {
         try
         {
-            var message = await _authService.Register(dto);
-            return Ok(new { message = message, status = "Registration successful" });
+            await _authService.Register(dto);
+            var response = new ApiResponse("Registration successful", 200);
+            return Ok(response);
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new { Error = "An unexpected error occurred", Details = ex.Message });
+            var response = new ApiResponse(ex.Message, 500);
+            return StatusCode(500, response);
         }
     }
 }
