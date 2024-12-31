@@ -32,21 +32,18 @@ public class FriendRepository(AppDbContext context)
         await _context.SaveChangesAsync();
     }
 
-    public async Task<Friend> GetFriend(Friend? friend)
+    public async Task<Friend> GetFriend(Friend friend)
     {
-        var cur1 = await _context.Friends
+        return await _context.Friends
                                    .FirstOrDefaultAsync(u => friend.ID == u.ID && friend.FriendID == u.FriendID);
-        var cur2 = await _context.Friends
-                                   .FirstOrDefaultAsync(u => friend.ID == u.FriendID && friend.FriendID == u.ID);
-        return (cur1 ?? cur2);
     }
 
-    public async Task RemoveFriend(Friend? friend)
+    public async Task RemoveFriend(Friend friend)
     {
-        var cur = await GetFriend(friend);
-        if (cur != null)
+        var curFriend = await GetFriend(friend);
+        if (curFriend != null)
         {
-            _context.Friends.Remove(cur);
+            _context.Friends.Remove(curFriend);
             await _context.SaveChangesAsync();
         }
     }

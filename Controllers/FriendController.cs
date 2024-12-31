@@ -1,100 +1,85 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using URLshortner.Dtos;
+using URLshortner.Exceptions;
 using URLshortner.Models;
 using URLshortner.Repositories;
 using URLshortner.Services;
 
 namespace URLshortner.Controllers;
 
+[Authorize]
 [ApiController]
-[Route("api/[controller]")]
-public class friendController(FriendRepository repository, UserRepository useRepository, FriendValidator validator) : ControllerBase
+[Route("friend")]
+public class FriendController(FriendService friendService) : ControllerBase
 {
-    private FriendValidator _validator = validator;
-    private UserRepository _userRepository = useRepository;
-    private FriendRepository _repository = repository;
+    private readonly FriendService _friendService = friendService  ?? throw new ArgumentNullException(nameof(friendService)); 
 
     [HttpPost]
     [Route("")]
-    public async Task<ActionResult<string>> AddFriend([FromBody] Friend? friend)
+    public async Task<IActionResult> AddFriend([FromBody] FriendRequestDTO? dto)
     {
-        if (!ModelState.IsValid || !_validator.IsValidFriend(friend))
+        try
         {
-            return BadRequest("Invalid Credentials");
+            var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out var userId))
+            {
+                return BadRequest(new ApiResponse("Invalid User ID format", 400));
+            }
+            
+            await _friendService.AddFriend(userId, dto);
+            return Ok(new ApiResponse("Friend updated successfully", 200));
         }
-
-        var IsUser1Found = await _userRepository.GetUserById(friend.ID);
-        var IsUser2Found = await _userRepository.GetUserById(friend.FriendID);
-
-        if (IsUser1Found == null)
+        catch (Exception ex)
         {
-            return NotFound($"User with ID {friend.ID} isn't registered");
+            return NotFound(new ApiResponse(ex.Message, 500));
         }
-        if (IsUser2Found == null)
-        {
-            return NotFound($"User with ID {friend.FriendID} isn't registered");
-        }
-
-        var IsFriends = await _repository.GetFriend(friend);
-
-        if (IsFriends != null)
-        {
-            return NotFound($"Users with IDs {friend.ID} and {friend.FriendID} are already friends");
-        }
-
-        await _repository.AddFriend(friend);
-
-        return Ok($"Friends for users {friend.ID} & {friend.FriendID} were added successfully");
     }
-    [HttpGet]
-    [Route("{id}")]
-    public async Task<ActionResult<List<int>>> GetMyFriends(int? id)
-    {
-        if (!ModelState.IsValid || !_validator.IsValidID(id))
-        {
-            return BadRequest("Invalid Credentials");
-        }
-
-        var IsUserFound = await _userRepository.GetUserById(id);
-
-        if (IsUserFound == null)
-        {
-            return NotFound($"User with ID {id} isn't registered");
-        }
-
-        var MyFriends = await _repository.GetFriendsById(id);
-
-        return Ok(new { Message = $"Friends for user {id} retrieved successfully!", friends = MyFriends });
-    }
+    
+    // [HttpGet]
+    // [Route("{id}")]
+    // public async Task<ActionResult<List<int>>> GetMyFriends(int? id)
+    // {
+    //     if (!ModelState.IsValid)
+    //     {
+    //         return BadRequest("Invalid Credentials");
+    //     }
+    //
+    //     var IsUserFound = await _userRepository.GetUserById(id);
+    //
+    //     if (IsUserFound == null)
+    //     {
+    //         return NotFound($"User with ID {id} isn't registered");
+    //     }
+    //
+    //     var MyFriends = await _repository.GetFriendsById(id);
+    //
+    //     return Ok(new { Message = $"Friends for user {id} retrieved successfully!", friends = MyFriends });
+    // }
+    
     [HttpDelete]
     [Route("")]
-    public async Task<ActionResult<string>> DeleteFriend(Friend? friend)
+    public async Task<ActionResult<string>> DeleteFriend([FromBody] FriendRequestDTO? dto)
     {
-        if (!ModelState.IsValid || !_validator.IsValidFriend(friend))
+        try
         {
-            return BadRequest("Invalid Credentials");
+            var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out var userId))
+            {
+                return BadRequest(new ApiResponse("Invalid User ID format", 400));
+            }
+
+            await _friendService.DeleteFriend(userId, dto);
+            return Ok(new ApiResponse("Friend deleted successfully", 200));
         }
-
-        var IsUser1Found = await _userRepository.GetUserById(friend.ID);
-        var IsUser2Found = await _userRepository.GetUserById(friend.FriendID);
-
-        if (IsUser1Found == null)
+        catch (InvalidUserException ex)
         {
-            return NotFound($"User with ID {friend.ID} isn't registered");
+            return NotFound(new ApiResponse(ex.Message, 404));
         }
-        if (IsUser2Found == null)
+        catch (Exception ex)
         {
-            return NotFound($"User with ID {friend.FriendID} isn't registered");
+            return BadRequest(new ApiResponse(ex.Message, 400));
         }
-
-        var IsFriends = await _repository.GetFriend(friend);
-
-        if (IsFriends == null)
-        {
-            return NotFound($"Users with IDs {friend.ID} and {friend.FriendID} are not even friends");
-        }
-
-        await _repository.RemoveFriend(friend);
-
-        return Ok($"Users with IDs {friend.ID} and {friend.FriendID} are not friends anymore");
     }
 }

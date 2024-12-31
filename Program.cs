@@ -22,12 +22,14 @@ builder.Services.AddDbContext<AppDbContext>(
 // Add Database repositories
 builder.Services.AddScoped<UserRepository>();
 builder.Services.AddScoped<FriendRepository>();
-builder.Services.AddScoped<URLRepository>();
+builder.Services.AddScoped<UrlRepository>();
 
 // Add Services
 builder.Services.AddScoped<TokenGenerator>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<UserService>();
+builder.Services.AddScoped<UrlService>();
+builder.Services.AddScoped<FriendService>();
 
 var jwtSettings = builder.Configuration;
 builder.Services.AddAuthentication(options =>

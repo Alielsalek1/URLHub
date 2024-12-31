@@ -1,81 +1,73 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using URLshortner.Dtos;
 using URLshortner.Models;
 using URLshortner.Repositories;
 using URLshortner.Services;
 
 namespace URLshortner.Controllers;
 
+[Authorize]
 [ApiController]
-[Route("api/[controller]")]
-public class urlController(URLRepository repository, UserRepository userRepository) : ControllerBase
+[Route("URL")]
+public class UrlController(UrlService urlService) : ControllerBase
 {
-    private readonly URLRepository _repository = repository;
-    private readonly UserRepository _userRepository = userRepository;
-
-    [HttpGet]
-    [Route("{id}")]
-    [Authorize]
-    public async Task<IActionResult> GetMyURLs(int? id)
-    {
-        if (!ModelState.IsValid)
-        {
-            return BadRequest("Invalid Credentials");
-        }
-
-        List<URL> urls = await _repository.GetURLsById(id);
-
-        return Ok(new {
-            Message = $"URLs for user with ID {id} have been retrieved successfully",
-            URLs = urls
-        });
-    }
-
-    // TODO : Make GetFriendsURLs (Pagination)
-
+    private readonly UrlService _urlService = urlService ?? throw new ArgumentNullException(nameof(urlService));
+    
+    // [HttpGet("{id}")]
+    // public async Task<IActionResult> GetMyUrls(int id, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
+    // {
+    //     var urls = await _urlService.GetMyUrls(id, pageNumber, pageSize);
+    //
+    //     if (urls == null || !urls.Any())
+    //     {
+    //         return Ok(new ApiResponse("No URLs found for this user", 200));
+    //     }
+    //
+    //     return Ok(new ApiResponse(urls, "URLs retrieved successfully", 200));
+    // }
+    
     [HttpPost]
-    [Route("")]
-    [Authorize]
-    public async Task<IActionResult> AddURL([FromBody] URL url)
+    public async Task<IActionResult> AddUrl([FromBody] UrlRequestDTO requestDto)
     {
-        if (!ModelState.IsValid)
+        try
         {
-            return BadRequest("Invalid Credentials");
+            var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out var userId))
+            {
+                return BadRequest(new ApiResponse("Invalid User ID format", 400));
+            }
+            
+            await _urlService.AddUrl(requestDto, userId);
+            return Ok(new ApiResponse("URL added successfully", 200));
         }
-
-        // TODO : Same Urls but different paths (https://www.facebook.com/ & https://www.facebook.com)
-
-        var IsUserPresent = await _userRepository.GetUserById(url.ID);
-
-        if (IsUserPresent == null)
+        catch (Exception ex)
         {
-            return NotFound($"User with ID {url.ID} isn't registered");
+            return BadRequest(new ApiResponse(ex.Message, 400));
         }
-
-        await _repository.AddURL(url);
-
-        return Ok($"URL for user {url.ID} has been added successfully");
+        
     }
 
+    // DELETE /api/urls
     [HttpDelete]
-    [Route("")]
-    [Authorize]
-    public async Task<IActionResult> RemoveURL([FromBody] URL? url)
+    public async Task<IActionResult> RemoveUrl([FromBody] UrlRequestDTO requestDto)
     {
-        if (!ModelState.IsValid)
+        try
         {
-            return BadRequest("Invalid Credentials");
+            var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out var userId))
+            {
+                return BadRequest(new ApiResponse("Invalid User ID format", 400));
+            }
+            
+            await _urlService.RemoveUrl(requestDto, userId);
+            return Ok(new ApiResponse("URL removed successfully", 200));
         }
-
-        var IsPresent = await _repository.GetInstance(url);
-
-        if (IsPresent == null)
+        catch
         {
-            return NotFound($"URL for user with ID {url.ID} not found");
+            return NotFound(new ApiResponse($"URL not found", 404));
         }
-
-        await _repository.RemoveURL(url);
-
-        return Ok($"URL for user with ID {url.ID} was deleted successfully");
+        
     }
 }

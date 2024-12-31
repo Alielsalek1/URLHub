@@ -17,20 +17,20 @@ namespace URLshortner.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.8")
+                .HasAnnotation("ProductVersion", "8.0.10")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
             modelBuilder.Entity("URLshortner.Models.Friend", b =>
                 {
-                    b.Property<int?>("ID1")
+                    b.Property<int?>("ID")
                         .HasColumnType("int");
 
-                    b.Property<int?>("ID2")
+                    b.Property<int?>("FriendID")
                         .HasColumnType("int");
 
-                    b.HasKey("ID1", "ID2");
+                    b.HasKey("ID", "FriendID");
 
                     b.ToTable("Friends");
                 });
@@ -56,22 +56,12 @@ namespace URLshortner.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ID"));
 
-                    b.Property<DateTime?>("DateOfBirth")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Email")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("Password")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("Role")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Sex")
-                        .HasColumnType("int");
 
                     b.Property<string>("Username")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("ID");

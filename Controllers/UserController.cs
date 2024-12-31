@@ -14,30 +14,10 @@ namespace URLshortner.Controllers;
 
 [Authorize]
 [ApiController]
-[Route("/user")]
+[Route("user")]
 public class UserController(UserService userService) : ControllerBase
 {
     private readonly UserService _userService = userService ?? throw new ArgumentNullException(nameof(userService));
-    
-    [HttpDelete("me")]
-    public async Task<ActionResult<ApiResponse>> DeleteUser()
-    {
-        try
-        {
-            var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int userId))
-            {
-                return BadRequest(new ApiResponse("Invalid User ID format", 400));
-            }
-            
-            return Ok(new ApiResponse("User deleted successfully", 200));
-        }
-        catch (Exception ex)
-        {
-            // Consider logging the exception here
-            return StatusCode(500, new ApiResponse("An error occurred while deleting the user", 500));
-        }
-    }
     
     [HttpGet("{id}")]
     public async Task<ActionResult<ApiResponse>> GetUserById(int id)
