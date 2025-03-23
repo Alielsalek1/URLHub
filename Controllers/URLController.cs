@@ -1,73 +1,53 @@
 ﻿using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using URLshortner.Dtos;
-using URLshortner.Models;
-using URLshortner.Repositories;
-using URLshortner.Services;
+using URLshortner.Dtos.Implementations;
+using URLshortner.Services.Interfaces;
 
 namespace URLshortner.Controllers;
 
 [Authorize]
 [ApiController]
-[Route("URL")]
-public class UrlController(UrlService urlService) : ControllerBase
+[Route("url")]
+public class UrlController(IUrlService urlService) : ControllerBase
 {
-    private readonly UrlService _urlService = urlService ?? throw new ArgumentNullException(nameof(urlService));
-    
-    // [HttpGet("{id}")]
-    // public async Task<IActionResult> GetMyUrls(int id, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
-    // {
-    //     var urls = await _urlService.GetMyUrls(id, pageNumber, pageSize);
-    //
-    //     if (urls == null || !urls.Any())
-    //     {
-    //         return Ok(new ApiResponse("No URLs found for this user", 200));
-    //     }
-    //
-    //     return Ok(new ApiResponse(urls, "URLs retrieved successfully", 200));
-    // }
-    
-    [HttpPost]
-    public async Task<IActionResult> AddUrl([FromBody] UrlRequestDTO requestDto)
+    [HttpGet("user/{id}")]
+    public async Task<IActionResult> GetUrls(int id, [FromQuery] int pageNumber, [FromQuery] int pageSize)
     {
-        try
-        {
-            var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out var userId))
-            {
-                return BadRequest(new ApiResponse("Invalid User ID format", 400));
-            }
-            
-            await _urlService.AddUrl(requestDto, userId);
-            return Ok(new ApiResponse("URL added successfully", 200));
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new ApiResponse(ex.Message, 400));
-        }
-        
+        var Urls = await urlService.GetItemsPagedAsync(id, pageNumber, pageSize);
+        var response = new ApiResponse($"got page no.{pageNumber} successfully", 200, Urls);
+
+        return StatusCode(200, response);
     }
 
-    // DELETE /api/urls
-    [HttpDelete]
-    public async Task<IActionResult> RemoveUrl([FromBody] UrlRequestDTO requestDto)
+    [HttpPost("me")]
+    public async Task<IActionResult> AddUrl([FromBody] UrlRequest dto)
     {
-        try
-        {
-            var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out var userId))
-            {
-                return BadRequest(new ApiResponse("Invalid User ID format", 400));
-            }
-            
-            await _urlService.RemoveUrl(requestDto, userId);
-            return Ok(new ApiResponse("URL removed successfully", 200));
-        }
-        catch
-        {
-            return NotFound(new ApiResponse($"URL not found", 404));
-        }
-        
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        int.TryParse(userIdClaim, out int userId);
+
+        await urlService.AddItemAsync(dto, userId);
+
+        var response = new ApiResponse("URL added successfully", 201);
+        return StatusCode(201, response);
+    }
+
+    [HttpDelete("me")]
+    public async Task<IActionResult> RemoveUrl([FromBody] UrlRequest dto)
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        int.TryParse(userIdClaim, out int userId);
+
+        await urlService.DeleteItemAsync(dto.url, userId);
+
+        var response = new ApiResponse("URL removed successfully", 204);
+        return StatusCode(204, response);
+    }
+
+    [HttpGet("{shortUrl}")]
+    public async Task<IActionResult> RedirectToOriginal(string shortUrl)
+    {
+        var originalUrl = await urlService.GetOriginalUrlAsync(shortUrl);
+        return Redirect(originalUrl);
     }
 }

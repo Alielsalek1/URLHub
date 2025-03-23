@@ -1,72 +1,91 @@
 using ALL.Database;
 using Microsoft.EntityFrameworkCore;
 using URLshortner.Controllers;
-using URLshortner.Repositories;
-using URLshortner.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using AutoMapper;
 using System.Text;
+using URLshortner.Utils;
+using Microsoft.Extensions.Configuration;
+using URLshortner.Middlewares;
+using URLshortner.Repositories.Implementations;
+using URLshortner.Repositories.Interfaces;
+using URLshortner.Models;
+using URLshortner.Services.Implementations;
+using URLshortner.Services.Interfaces;
+using FluentValidation.AspNetCore;
+using URLshortner.Dtos.Implementations;
+using URLshortner.Dtos.Validators;
+using FluentValidation;
+using URLshortner.Filters;
+
+// TODO: Unit Testing
+// TODO: Chat with Friends
+// TODO: Email Service
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-
-// Add Database
-builder.Services.AddDbContext<AppDbContext>(
-     bd => bd.UseSqlServer(
-         "server=LEGIONFORELSALE;database=URLDB;integrated security=true;trust server certificate=True;")
-);
+// Add controllers and their filters
+builder.Services.AddControllers(options =>
+{
+    options.Filters.Add<ValidateModelAttribute>();
+});
 
 // Add Database repositories
-builder.Services.AddScoped<UserRepository>();
-builder.Services.AddScoped<FriendRepository>();
-builder.Services.AddScoped<UrlRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IUserFriendRepository, UserFriendRepository>();
+builder.Services.AddScoped<IUrlRepository, UrlRepository>();
+builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 
 // Add Services
-builder.Services.AddScoped<TokenGenerator>();
-builder.Services.AddScoped<AuthService>();
-builder.Services.AddScoped<UserService>();
-builder.Services.AddScoped<UrlService>();
-builder.Services.AddScoped<FriendService>();
+builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IUrlService, UrlService>();
+builder.Services.AddScoped<IUserFriendService, UserFriendService>();
 
-var jwtSettings = builder.Configuration;
-builder.Services.AddAuthentication(options =>
+// Add Database
+builder.Services.AddDbContext<AppDbContext>(options =>
 {
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-}).AddJwtBearer(options =>
-{
-    options.SaveToken = true;
-    options.TokenValidationParameters = new TokenValidationParameters
-    {
-        ValidateIssuer = false,
-        ValidateAudience = false,
-        ValidateIssuerSigningKey = true,
-        ValidateLifetime = true,
-        ValidIssuer = jwtSettings["JwtSettings:Issuer"],
-        ValidAudience = jwtSettings["JwtSettings:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["JwtSettings:SecretKey"]))
-    };
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+    options.UseSqlServer(connectionString);
 });
+
+ //builder.Services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<AppDbContext>());
+
+// Add AutoMapper
+builder.Services.AddAutoMapper(typeof(MappingProfile));
+
+// Add Global ExceptionHandler
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+
+// Add JWT Tokens for Authentication
+var jwtSettings = builder.Configuration;
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.SaveToken = true;
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateIssuerSigningKey = true,
+            ValidateLifetime = true,
+            ValidIssuer = jwtSettings["JwtSettings:Issuer"],
+            ValidAudience = jwtSettings["JwtSettings:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["JwtSettings:SecretKey"]))
+        };
+    });
+
+// add Validators
+builder.Services.AddFluentValidationAutoValidation();
+builder.Services.AddValidatorsFromAssemblyContaining<UpdateUserRequestValidator>();
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-
-app.UseRouting();
-
+app.UseExceptionHandler(_ => { });
 app.UseHttpsRedirection();
-
 app.UseAuthentication();
-
 app.UseAuthorization();
-
 app.MapControllers();
-
 app.Run();

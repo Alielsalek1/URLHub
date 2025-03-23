@@ -1,52 +1,39 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using URLshortner.Dtos;
-using URLshortner.Services;
 using URLshortner.Exceptions;
+using System.Security.Claims;
+using URLshortner.Services.Implementations;
+using URLshortner.Services.Interfaces;
+using URLshortner.Dtos.Implementations;
 
 namespace URLshortner.Controllers;
 
+// TODO: OAuth2
+
 [ApiController]
-[Route("/auth")]
-public class AuthController : ControllerBase
+[Route("auth")]
+public class AuthController(IAuthService authService, ITokenService tokenService) : ControllerBase
 {
-    private readonly AuthService _authService;
-
-    public AuthController(AuthService authService)
+    [HttpPost("login")]
+    public async Task<IActionResult> Login([FromBody] LoginRequest dto)
     {
-        _authService = authService ?? throw new ArgumentNullException(nameof(authService));
+        var token = await authService.LoginAsync(dto);
+        var response = new ApiResponse("Login successful", 200, token);
+        return StatusCode(200, response);
     }
 
-    [HttpPost]
-    [Route("login")]
-    public async Task<IActionResult> Login([FromBody] AuthRequestDto dto)
+    [HttpPost("register")]
+    public async Task<IActionResult> Register([FromBody] RegisterRequest dto)
     {
-        try
-        {
-            var token = await _authService.Login(dto);
-            var response = new ApiResponse(token, "Login successful", 200);
-            return Ok(response);
-        }
-        catch (Exception ex)
-        {
-            var response = new ApiResponse(ex.Message, 500);
-            return StatusCode(500, response);
-        }
+        await authService.RegisterAsync(dto);
+        var response = new ApiResponse("Registration successful", 201);
+        return StatusCode(201, response);
     }
 
-    [HttpPost]
-    [Route("register")]
-    public async Task<IActionResult> Register([FromBody] AuthRequestDto dto)
+    [HttpPost("refresh")]
+    public async Task<IActionResult> Refresh([FromBody] TokenRefreshRequest dto)
     {
-        try
-        {
-            await _authService.Register(dto);
-            var response = new ApiResponse("Registration successful", 200);
-            return Ok(response);
-        }
-        catch (Exception ex)
-        {
-            var response = new ApiResponse(ex.Message, 500);
-            return StatusCode(500, response);
-        }
+        var token = await tokenService.RefreshAsync(dto);
+        var response = new ApiResponse("Token refreshed successfully", 200, token);
+        return StatusCode(200, response);
     }
 }
