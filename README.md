@@ -36,7 +36,7 @@ A Postman collection has been created to interact with the API. Below is a summa
 
 ### Prerequisites
 - [.NET 9 SDK](https://dotnet.microsoft.com/download)
-- SQL Server
+- [SQL Server](https://www.microsoft.com/en-us/sql-server/sql-server-downloads)
 - [Postman](https://www.postman.com/) (optional for API testing)
 
 ### Security Configuration
