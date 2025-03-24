@@ -16,4 +16,6 @@ obj/
 .DS_Store
 Thumbs.db
 
-DB Tables.txt.qodo
+.qodo
+.idea
+.bin
