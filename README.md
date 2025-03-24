@@ -70,7 +70,7 @@ Before running the API, you must configure two critical security settings using 
 ## Steps to Run the API
 
   1. **Clone the Repository**:
-      ```sh
+      ```git
         git clone <repository-url>
         cd URL-Hub
       ```
