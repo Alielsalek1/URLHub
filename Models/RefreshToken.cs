@@ -9,6 +9,6 @@ public class RefreshToken
     public required DateTime Expires { get; set; }
     public bool IsRevoked { get; set; } = false;
 
-    public int? UserId { get; set; } // Foreign key & primary key
+    public int UserId { get; set; } // Foreign key & primary key
     public required User User = null!; // navigation property
 }

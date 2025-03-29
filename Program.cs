@@ -18,6 +18,8 @@ using URLshortner.Dtos.Implementations;
 using URLshortner.Dtos.Validators;
 using FluentValidation;
 using URLshortner.Filters;
+using System.Net.Mail;
+using System.Net;
 
 // TODO: Unit Testing
 // TODO: Chat with Friends
@@ -36,6 +38,7 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserFriendRepository, UserFriendRepository>();
 builder.Services.AddScoped<IUrlRepository, UrlRepository>();
 builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+builder.Services.AddScoped<IActivationTokenRepository, ActivationTokenRepository>();
 
 // Add Services
 builder.Services.AddScoped<ITokenService, TokenService>();
@@ -43,6 +46,7 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IUrlService, UrlService>();
 builder.Services.AddScoped<IUserFriendService, UserFriendService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
 
 // Add Database
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -51,7 +55,20 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(connectionString);
 });
 
- //builder.Services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<AppDbContext>());
+// Add Fluent Email
+builder.Services.AddFluentEmail(builder.Configuration["EmailSettings:From"])
+    .AddSmtpSender(new SmtpClient
+    {
+        Host = builder.Configuration["EmailSettings:SmtpHost"],
+        Port = int.Parse(builder.Configuration["EmailSettings:SmtpPort"]),
+        EnableSsl = true,
+        Credentials = new NetworkCredential(
+            builder.Configuration["EmailSettings:SmtpUser"],
+            builder.Configuration["EmailSettings:SmtpPass"]
+        )
+    });
+
+// builder.Services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<AppDbContext>());
 
 // Add AutoMapper
 builder.Services.AddAutoMapper(typeof(MappingProfile));

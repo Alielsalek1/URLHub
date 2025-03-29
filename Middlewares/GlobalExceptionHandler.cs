@@ -44,6 +44,24 @@ public class GlobalExceptionHandler : IExceptionHandler
                 Detail = exception.Message,
                 Status = StatusCodes.Status400BadRequest
             },
+            FailedToSendEmailException => new ProblemDetails
+            {
+                Title = "Failed to send Email",
+                Detail = exception.Message,
+                Status = StatusCodes.Status500InternalServerError
+            },
+            ExistsButNotVerifiedException => new ProblemDetails
+            {
+                Title = "Email already Exists but requires verification",
+                Detail = exception.Message,
+                Status = StatusCodes.Status409Conflict
+            },
+            AlreadyVerifiedException => new ProblemDetails
+            {
+                Title = "Email already Exists but requires verification",
+                Detail = exception.Message,
+                Status = StatusCodes.Status403Forbidden
+            },
             _ => new ProblemDetails
             {
                 Title = "Internal Server Error",

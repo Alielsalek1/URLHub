@@ -24,8 +24,8 @@ public class AuthController(IAuthService authService, ITokenService tokenService
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterRequest dto)
     {
-        await authService.RegisterAsync(dto);
-        var response = new ApiResponse("Registration successful", 201);
+        var content = await authService.RegisterAsync(dto);
+        var response = new ApiResponse("Registration successful, Complete your verification", 201, content);
         return StatusCode(201, response);
     }
 
@@ -34,6 +34,22 @@ public class AuthController(IAuthService authService, ITokenService tokenService
     {
         var token = await tokenService.RefreshAsync(dto);
         var response = new ApiResponse("Token refreshed successfully", 200, token);
+        return StatusCode(200, response);
+    }
+
+    [HttpPost("activate")]
+    public async Task<IActionResult> RequestActivation([FromBody] ActivationRequest dto)
+    {
+        await authService.RequestActivationAsync(dto);
+        var response = new ApiResponse("Activation Email sent successfully", 200);
+        return StatusCode(200, response);
+    }
+
+    [HttpGet("activate")]
+    public async Task<IActionResult> Activate([FromQuery] ApplyActivationRequest dto)
+    {
+        await authService.ActivateUserAsync(dto);
+        var response = new ApiResponse("Account activated successfully.", 200);
         return StatusCode(200, response);
     }
 }

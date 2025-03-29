@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using URLshortner.Dtos;
+using URLshortner.Dtos.Implementations;
 using URLshortner.Exceptions;
 using URLshortner.Models;
 using URLshortner.Repositories;
@@ -28,13 +29,13 @@ public class UserFriendController(IUserFriendService friendService) : Controller
     }
 
     [HttpGet("me")]
-    public async Task<IActionResult> GetItems([FromQuery] int pageNumber, [FromQuery] int pageSize)
+    public async Task<IActionResult> GetItems([FromQuery] PaginationRequest dto)
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         int.TryParse(userIdClaim, out int userId);
 
-        var pagedItems = await friendService.GetItemsPagedAsync(userId, pageNumber, pageSize);
-        var response = new ApiResponse($"got page no.{pageNumber} successfully", 200, pagedItems);
+        var pagedItems = await friendService.GetItemsPagedAsync(userId, dto.pageNumber, dto.pageSize);
+        var response = new ApiResponse($"got page no.{dto.pageNumber} successfully", 200, pagedItems);
         return StatusCode(200, response);
     }
 

@@ -10,6 +10,7 @@ public class User
     public required string Username { get; set; }
     public required string Password { get; set; }
     public required string Email { get; set; }
+    public required bool IsEmailVerified { get; set; } = false;
     public Roles Role { get; set; } = Roles.User;
 
     // Many-to-many relationship: a user can have many MappedUrls.
@@ -20,4 +21,7 @@ public class User
 
     // One-to-one: RefreshToken (with shared PK)
     public required RefreshToken RefreshToken { get; set; } = null!;
+
+    // one-to-many: ActivasionTokens
+    public required List<ActivationToken> ActivationTokens { get; set; } = new();
 }

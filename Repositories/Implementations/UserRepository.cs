@@ -18,7 +18,7 @@ public class UserRepository(AppDbContext context) : IUserRepository
         return await context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == Username);
     }
 
-    public async Task<User> GetByEmail(string Email)
+    public async Task<User> GetByEmailAsync(string Email)
     {
         return await context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Email == Email);
     }
@@ -31,7 +31,12 @@ public class UserRepository(AppDbContext context) : IUserRepository
     
     public async Task UpdateAsync(User user)
     {
-        context.Users.Update(user);
+        var existingUser = await context.Users.FirstOrDefaultAsync(u => u.Id == user.Id);
+
+        existingUser.Username = user.Username;
+        existingUser.Password = user.Password;
+        existingUser.IsEmailVerified = user.IsEmailVerified;
+
         await context.SaveChangesAsync();
     }
 

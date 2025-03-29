@@ -12,10 +12,10 @@ namespace URLshortner.Controllers;
 public class UrlController(IUrlService urlService) : ControllerBase
 {
     [HttpGet("user/{id}")]
-    public async Task<IActionResult> GetUrls(int id, [FromQuery] int pageNumber, [FromQuery] int pageSize)
+    public async Task<IActionResult> GetUrls(int id, [FromQuery] PaginationRequest dto)
     {
-        var Urls = await urlService.GetItemsPagedAsync(id, pageNumber, pageSize);
-        var response = new ApiResponse($"got page no.{pageNumber} successfully", 200, Urls);
+        var Urls = await urlService.GetItemsPagedAsync(id, dto.pageNumber, dto.pageSize);
+        var response = new ApiResponse($"got page no.{dto.pageNumber} successfully", 200, Urls);
 
         return StatusCode(200, response);
     }
