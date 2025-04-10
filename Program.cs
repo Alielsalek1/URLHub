@@ -22,8 +22,8 @@ using System.Net.Mail;
 using System.Net;
 
 // TODO: Unit Testing
+// TODO: Task to delete activation tokens
 // TODO: Chat with Friends
-// TODO: Email Service
 
 var builder = WebApplication.CreateBuilder(args);
 

@@ -65,7 +65,7 @@ public class GlobalExceptionHandler : IExceptionHandler
             _ => new ProblemDetails
             {
                 Title = "Internal Server Error",
-                Detail = exception.Message,
+                Detail = "an unexpected error has happened",
                 Status = StatusCodes.Status500InternalServerError
             }
         };

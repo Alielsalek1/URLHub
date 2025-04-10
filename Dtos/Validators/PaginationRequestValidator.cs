@@ -8,7 +8,7 @@ public class PaginationRequestValidator : AbstractValidator<PaginationRequest>
 {
     public PaginationRequestValidator()
     {
-        RuleFor(x => x.pageNumber).SetValidator(new IdValidator());
-        RuleFor(x => x.pageSize).SetValidator(new IdValidator());
+        RuleFor(x => x.pageNumber).SetValidator(new PageNumberValidator());
+        RuleFor(x => x.pageSize).SetValidator(new PageSizeValidator());
     }
 }

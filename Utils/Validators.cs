@@ -12,6 +12,25 @@ public class IdValidator : AbstractValidator<int>
     }
 }
 
+public class PageSizeValidator : AbstractValidator<int>
+{
+    public PageSizeValidator()
+    {
+        RuleFor(x => x)
+            .GreaterThan(0).WithMessage("Page Size must be greater than 0.")
+            .LessThan(300).WithMessage("Page Size must be smaller than 300.");
+    }
+}
+
+public class PageNumberValidator : AbstractValidator<int>
+{
+    public PageNumberValidator()
+    {
+        RuleFor(x => x)
+            .GreaterThan(0).WithMessage("Page number must be greater than 0.");
+    }
+}
+
 public class UsernameValidator : AbstractValidator<string>
 {
     public UsernameValidator()
