@@ -91,4 +91,8 @@ Before running the API, you must configure two critical security settings using 
 
 ## Testing the API
 - Import the provided Postman collection and test the endpoints.
+<<<<<<< Updated upstream
 - Use the Bearer Token for authenticated endpoints.
+=======
+- Use the Bearer Token for authenticated endpoints.
+>>>>>>> Stashed changes

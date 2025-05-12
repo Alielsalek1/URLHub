@@ -62,6 +62,12 @@ public class GlobalExceptionHandler : IExceptionHandler
                 Detail = exception.Message,
                 Status = StatusCodes.Status403Forbidden
             },
+            GoogleAuthFailedException => new ProblemDetails
+            {
+                Title = "Google Authentication Failed",
+                Detail = exception.Message,
+                Status = StatusCodes.Status401Unauthorized
+            },
             _ => new ProblemDetails
             {
                 Title = "Internal Server Error",

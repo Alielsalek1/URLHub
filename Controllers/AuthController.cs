@@ -4,10 +4,15 @@ using System.Security.Claims;
 using URLshortner.Services.Implementations;
 using URLshortner.Services.Interfaces;
 using URLshortner.Dtos.Implementations;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using System.Threading.Tasks;
+using URLshortner.Enums;
 
 namespace URLshortner.Controllers;
 
-// TODO: OAuth2
+// TODO: Forget Password
 
 [ApiController]
 [Route("auth")]
@@ -18,6 +23,21 @@ public class AuthController(IAuthService authService, ITokenService tokenService
     {
         var token = await authService.LoginAsync(dto);
         var response = new ApiResponse("Login successful", 200, token);
+        return StatusCode(200, response);
+    }
+
+    [HttpGet("externallogin")]
+    public async Task<IActionResult> ExternalLogin()
+    {
+        var properties = new AuthenticationProperties { RedirectUri = Url.Action(nameof(ExternalLoginCallback)) };
+        return Challenge(properties, GoogleDefaults.AuthenticationScheme);
+    }
+
+    [HttpGet("externallogincallback")]
+    public async Task<IActionResult> ExternalLoginCallback()
+    {
+        var content = await authService.OauthLogin(HttpContext);
+        var response = new ApiResponse("Login successful", 200, content);
         return StatusCode(200, response);
     }
 

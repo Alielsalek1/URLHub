@@ -19,7 +19,7 @@ public class TokenService(
     IUserRepository userRepository
     ) : ITokenService
 {
-    public string GenerateAccessToken(User curUser)
+    public string GenerateJwtToken(User curUser)
     {
         var claims = new List<Claim>
         {
@@ -27,7 +27,7 @@ public class TokenService(
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 
-        var secretKey = configuration["JwtSettings:SecretKey"];
+        var secretKey = configuration["JwtSettings:Key"];
         var issuer = configuration["JwtSettings:Issuer"];
         var audience = configuration["JwtSettings:Audience"];
 
@@ -87,7 +87,7 @@ public class TokenService(
         }
 
         var user = await userRepository.GetByIdAsync(dto.userId);
-        var accessToken = GenerateAccessToken(user);
+        var accessToken = GenerateJwtToken(user);
 
         return accessToken;
     }

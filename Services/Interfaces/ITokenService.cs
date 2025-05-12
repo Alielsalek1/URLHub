@@ -5,7 +5,7 @@ namespace URLshortner.Services.Interfaces;
 
 public interface ITokenService
 {
-    string GenerateAccessToken(User curUser);
+    string GenerateJwtToken(User curUser);
     Task<RefreshToken> GenerateRefreshTokenAsync(User curUser);
     Task<string> RefreshAsync(TokenRefreshRequest dto);
     Task RenewRefreshTokenAsync(RefreshToken refreshToken);
