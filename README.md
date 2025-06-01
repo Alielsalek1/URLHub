@@ -103,5 +103,8 @@ Use User Secrets for:
 
 ## Testing the API
 - Import the provided Postman collection and test the endpoints.
+<<<<<<< Updated upstream
 - Use the Bearer Token for authenticated endpoints.
-
+=======
+- Use the Bearer Token for authenticated endpoints.
+>>>>>>> Stashed changes

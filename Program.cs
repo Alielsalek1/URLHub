@@ -20,10 +20,17 @@ using FluentValidation;
 using URLshortner.Filters;
 using System.Net.Mail;
 using System.Net;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.CookiePolicy;
 
 // TODO: Unit Testing
 // TODO: Task to delete activation tokens
 // TODO: Chat with Friends
+// TODO: Load Testing
+// TODO: Rate Limiting
+// TODO: Caching
+// TODO: Logging
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -68,41 +75,61 @@ builder.Services.AddFluentEmail(builder.Configuration["EmailSettings:From"])
         )
     });
 
+// Authenticaion
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme    = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultSignInScheme       = CookieAuthenticationDefaults.AuthenticationScheme;
+})
+.AddCookie()
+.AddJwtBearer(options =>
+{
+    options.SaveToken = true;
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer           = true,
+        ValidateAudience         = true,
+        ValidateIssuerSigningKey = true,
+        ValidateLifetime         = true,
+        ValidIssuer              = builder.Configuration["JwtSettings:Issuer"],
+        ValidAudience            = builder.Configuration["JwtSettings:Audience"],
+        IssuerSigningKey         = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:Key"]))
+    };
+})
+.AddGoogle(options =>
+{
+    options.ClientId     = builder.Configuration["Google:ClientId"];
+    options.ClientSecret = builder.Configuration["Google:ClientSecret"];
+});
+
+builder.Services.Configure<CookiePolicyOptions>(options => {
+    options.MinimumSameSitePolicy = SameSiteMode.Lax;
+    options.Secure = CookieSecurePolicy.Always;
+    options.HttpOnly = HttpOnlyPolicy.Always;
+});
+
+builder.Services.AddAuthorization();
+
 // builder.Services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<AppDbContext>());
 
-// Add AutoMapper
 builder.Services.AddAutoMapper(typeof(MappingProfile));
 
-// Add Global ExceptionHandler
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
-// Add JWT Tokens for Authentication
-var jwtSettings = builder.Configuration;
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.SaveToken = true;
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateIssuerSigningKey = true,
-            ValidateLifetime = true,
-            ValidIssuer = jwtSettings["JwtSettings:Issuer"],
-            ValidAudience = jwtSettings["JwtSettings:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Jwt:Key"]))
-        };
-    });
-
-// add Validators
 builder.Services.AddFluentValidationAutoValidation();
+
 builder.Services.AddValidatorsFromAssemblyContaining<UpdateUserRequestValidator>();
 
 var app = builder.Build();
 
 app.UseExceptionHandler(_ => { });
 app.UseHttpsRedirection();
+app.UseRouting();
+app.UseCookiePolicy();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+
 app.Run();

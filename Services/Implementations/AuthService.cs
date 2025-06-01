@@ -10,6 +10,10 @@ using Microsoft.JSInterop.Infrastructure;
 using Microsoft.Extensions.Configuration;
 using URLshortner.Dtos.Implementations;
 using URLshortner.Repositories.Implementations;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication;
+using System.Security.Claims;
+using URLshortner.Enums;
 
 namespace URLshortner.Services.Implementations;
 
@@ -24,11 +28,11 @@ public class AuthService(
     IConfiguration configuration
     ) : IAuthService
 {
-    public async Task<AuthResponse> LoginAsync(LoginRequest dto)
+    public async Task<AuthResponse> LoginAsync(LoginRequest dto, AuthScheme authScheme)
     {
         var curUser = await userRepository.GetByUsernameAsync(dto.username);
         
-        if (!Helpers.IsValidUser(curUser, dto.password))
+        if (!Helpers.IsValidUser(curUser, dto.password) || curUser.AuthScheme != authScheme)
         {
             throw new InvalidInputException("Invalid Credentials");
         }
@@ -36,20 +40,12 @@ public class AuthService(
         var refreshToken = await refreshTokenRepository.GetRefreshTokenByUserIdAsync(curUser.Id);
         if (refreshToken == null)
         {
-            throw new NotFoundException("no refresh token found");
+            throw new NotFoundException("Refresh token not found.");
         }
-        if (refreshToken.IsRevoked)
-        {
-            throw new UnAuthorizedException("refresh token is revoked");
-        }
-        if (refreshToken.Expires < DateTime.UtcNow)
-        {
-            throw new UnAuthorizedException("refresh token has been expired");
-        }
-
         await tokenService.RenewRefreshTokenAsync(refreshToken);
+        Helpers.IsValidRefreshToken(refreshToken);
 
-        var accessToken = tokenService.GenerateAccessToken(curUser);
+        var accessToken = tokenService.GenerateJwtToken(curUser);
 
         return new AuthResponse
         {
@@ -63,7 +59,8 @@ public class AuthService(
     {
         // getting the mapped user from the DTO
         User newUser = mapper.Map<User>(dto);
-
+        newUser.AuthScheme = AuthScheme.UrlHub;
+        
         // checking if the username already exists, username should be unique
         if (await userRepository.GetByUsernameAsync(dto.username) != null)
         {
@@ -144,5 +141,50 @@ public class AuthService(
 
         user.IsEmailVerified = true;
         await userRepository.UpdateAsync(user);
+    }
+
+    public async Task<AuthResponse> OauthLogin(HttpContext context)
+    {
+        // Retrieve the external login information after the user has authenticated with Google.
+        var result = await context.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        if (!result.Succeeded)
+        {
+            throw new GoogleAuthFailedException("External authentication failed.");
+        }
+
+        // user Data
+        var externalPrincipal = result.Principal;
+        string email = externalPrincipal.FindFirst(ClaimTypes.Email)?.Value ?? "";
+        string name = externalPrincipal.FindFirst(ClaimTypes.Name)?.Value ?? "";
+
+        if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(name))
+        {
+            throw new InvalidInputException("Invalid external login information.");
+        }
+
+        var user = await userRepository.GetByEmailAsync(email);
+
+        if (user == null)
+        {
+            // registeration
+            var passwordHasher = new PasswordHasher<string>(); // for storing hashed passwords in the db
+            user = new User
+            {
+                Username = name,
+                Email = email,
+                IsEmailVerified = true,
+                AuthScheme = AuthScheme.Google,
+                Password = passwordHasher.HashPassword(null, "0")
+            };
+            await userRepository.AddAsync(user);
+            await tokenService.GenerateRefreshTokenAsync(user);
+        }
+
+        return await this.LoginAsync(new LoginRequest
+        {
+            username = user.Username,
+            password = "0"
+        },
+        AuthScheme.Google);
     }
 }

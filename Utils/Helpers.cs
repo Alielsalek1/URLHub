@@ -2,12 +2,30 @@
 using System.Security.Cryptography;
 using System.Text;
 using URLshortner.Dtos;
+using URLshortner.Exceptions;
 using URLshortner.Models;
 
 namespace URLshortner.Utils;
 
 public static class Helpers
 {
+    public static bool IsValidRefreshToken(RefreshToken token)
+    {
+        if (token == null)
+        {
+            throw new NotFoundException("no refresh token found");
+        }
+        if (token.IsRevoked)
+        {
+            throw new UnAuthorizedException("refresh token is revoked");
+        }
+        if (token.Expires < DateTime.UtcNow)
+        {
+            throw new UnAuthorizedException("refresh token has been expired");
+        }
+        return true;
+    }
+
     public static bool IsValidUser(User curUser, string password)
     {
         if (curUser == null) return false;
