@@ -26,14 +26,10 @@ using Microsoft.AspNetCore.CookiePolicy;
 
 // TODO: Unit Testing
 // TODO: Chat with Friends
-<<<<<<< Updated upstream
-// TODO: Email Service
-=======
 // TODO: Load Testing
 // TODO: Rate Limiting
 // TODO: Caching
 // TODO: Logging
->>>>>>> Stashed changes
 
 var builder = WebApplication.CreateBuilder(args);
 
