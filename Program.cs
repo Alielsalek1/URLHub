@@ -24,13 +24,12 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.CookiePolicy;
 using StackExchange.Redis;
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.RateLimiting;
 
 // TODO: Unit Testing
-// TODO: Task to delete activation tokens
 // TODO: Chat with Friends
 // TODO: Load Testing
-// TODO: Rate Limiting
-// TODO: Caching
 // TODO: Logging
 
 var builder = WebApplication.CreateBuilder(args);
@@ -120,6 +119,18 @@ builder.Services.Configure<CookiePolicyOptions>(options => {
 
 builder.Services.AddAuthorization();
 
+// Add Rate Limiting
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddFixedWindowLimiter("fixed", limiterOptions =>
+    {
+        limiterOptions.PermitLimit = 10;
+        limiterOptions.Window = TimeSpan.FromSeconds(1);
+        limiterOptions.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        limiterOptions.QueueLimit = 0;
+    });
+});
+
 // builder.Services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<AppDbContext>());
 
 builder.Services.AddAutoMapper(typeof(MappingProfile));
@@ -132,6 +143,7 @@ builder.Services.AddValidatorsFromAssemblyContaining<UpdateUserRequestValidator>
 
 var app = builder.Build();
 
+app.UseRateLimiter();
 app.UseExceptionHandler(_ => { });
 app.UseHttpsRedirection();
 app.UseRouting();
