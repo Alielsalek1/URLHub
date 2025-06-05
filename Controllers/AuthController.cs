@@ -9,13 +9,12 @@ using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using System.Threading.Tasks;
 using URLshortner.Enums;
+using Microsoft.AspNetCore.Authorization;
 
 namespace URLshortner.Controllers;
 
-// TODO: Forget Password
-
 [ApiController]
-[Route("auth")]
+[Route("api/auth")]
 public class AuthController(IAuthService authService, ITokenService tokenService) : ControllerBase
 {
     [HttpPost("login")]
@@ -57,15 +56,31 @@ public class AuthController(IAuthService authService, ITokenService tokenService
         return StatusCode(200, response);
     }
 
-    [HttpPost("activate")]
-    public async Task<IActionResult> RequestActivation([FromBody] ActivationRequest dto)
+    [HttpPost("request-reset-password")]
+    public async Task<IActionResult> RequestPasswordReset([FromBody] ActionRequest dto)
+    {
+        await authService.RequestPasswordReset(dto);
+        var response = new ApiResponse("Password reset email sent successfully", 200);
+        return StatusCode(200, response);
+    }
+
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest dto)
+    {
+        var user = await authService.ResetPassword(dto);
+        var response = new ApiResponse("Password reset successfully", 200, user);
+        return StatusCode(200, response);
+    }
+
+    [HttpPost("request-activate-email")]
+    public async Task<IActionResult> RequestActivation([FromBody] ActionRequest dto)
     {
         await authService.RequestActivationAsync(dto);
         var response = new ApiResponse("Activation Email sent successfully", 200);
         return StatusCode(200, response);
     }
 
-    [HttpGet("activate")]
+    [HttpPost("activate-email")]
     public async Task<IActionResult> Activate([FromQuery] ApplyActivationRequest dto)
     {
         await authService.ActivateUserAsync(dto);

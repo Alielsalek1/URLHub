@@ -16,7 +16,7 @@ namespace URLshortner.Controllers;
 
 [Authorize]
 [ApiController]
-[Route("user")]
+[Route("api/user")]
 public class UserController(IUserService userService) : ControllerBase
 {
     [HttpGet("me")]

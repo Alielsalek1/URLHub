@@ -13,7 +13,7 @@ namespace URLshortner.Controllers;
 
 [Authorize]
 [ApiController]
-[Route("friend")]
+[Route("api/friend")]
 public class UserFriendController(IUserFriendService friendService) : ControllerBase
 {
     [HttpPost("{id}")]

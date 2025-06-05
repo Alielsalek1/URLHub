@@ -22,7 +22,4 @@ public class User
 
     // One-to-one: RefreshToken (with shared PK)
     public RefreshToken RefreshToken { get; set; } = null!;
-
-    // one-to-many: ActivationTokens
-    public List<ActivationToken> ActivationTokens { get; set; } = new();
 }

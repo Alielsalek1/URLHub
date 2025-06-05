@@ -14,13 +14,13 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication;
 using System.Security.Claims;
 using URLshortner.Enums;
-
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 namespace URLshortner.Services.Implementations;
 
 public class AuthService(
     IUserRepository userRepository,
     IRefreshTokenRepository refreshTokenRepository,
-    IActivationTokenRepository activationTokenRepository,
+    IActionTokenRepository ActionTokenRepository,
     IMapper mapper,
     ITokenService tokenService,
     IUserService userService,
@@ -31,7 +31,7 @@ public class AuthService(
     public async Task<AuthResponse> LoginAsync(LoginRequest dto, AuthScheme authScheme)
     {
         var curUser = await userRepository.GetByUsernameAsync(dto.username);
-        
+
         if (!Helpers.IsValidUser(curUser, dto.password) || curUser.AuthScheme != authScheme)
         {
             throw new InvalidInputException("Invalid Credentials");
@@ -60,7 +60,7 @@ public class AuthService(
         // getting the mapped user from the DTO
         User newUser = mapper.Map<User>(dto);
         newUser.AuthScheme = AuthScheme.UrlHub;
-        
+
         // checking if the username already exists, username should be unique
         if (await userRepository.GetByUsernameAsync(dto.username) != null)
         {
@@ -75,10 +75,6 @@ public class AuthService(
             {
                 throw new AlreadyExistsException("Email already in use");
             }
-            else
-            {
-                throw new ExistsButNotVerifiedException("Email already exists but requires verification");
-            }
         }
 
         await userService.AddUserAsync(newUser);
@@ -92,27 +88,63 @@ public class AuthService(
         return response;
     }
 
-    public async Task RequestActivationAsync(ActivationRequest dto)
+    public async Task RequestPasswordReset(ActionRequest dto)
     {
-        var user = await userRepository.GetByIdAsync(dto.userId);
+        var user = await userRepository.GetByEmailAsync(dto.email);
+        if (user == null)
+            throw new NotFoundException("Not found.");
+        if (user.AuthScheme != AuthScheme.UrlHub)
+            throw new InvalidInputException();
+
+        var token = Guid.NewGuid();
+
+        string key = $"reset_token:{user.Id}:{token}";
+        await ActionTokenRepository.AddAsync(key, token.ToString());
+
+        string resetLink = $"{configuration["frontend"]}/reset-password?token={token}&email={user.Email}";
+        string subject = "Reset Your Password";
+        string body = $"<h1>Reset Your Password</h1>" +
+            $"<p>To reset your password, please click the link below:</p>" +
+            $"<a href='{resetLink}'>Reset Password</a>";
+
+        await emailService.SendEmailAsync(user.Email, subject, body);
+    }
+
+    public async Task<UserResponse> ResetPassword(ResetPasswordRequest dto)
+    {
+        var user = await userRepository.GetByEmailAsync(dto.email);
+        if (user == null)
+            throw new NotFoundException("User not found.");
+
+        string key = $"reset_token:{user.Id}:{dto.token}";
+        var resetToken = await ActionTokenRepository.GetToken(key);
+
+        if (string.IsNullOrEmpty(resetToken))
+            throw new InvalidInputException("Invalid reset token.");
+
+        return await userService.UpdateUserAsync(user.Id, new UpdateUserRequest
+        {
+            username = user.Username,
+            password = dto.newPassword
+        });
+    }
+
+    public async Task RequestActivationAsync(ActionRequest dto)
+    {
+        var user = await userRepository.GetByEmailAsync(dto.email);
         if (user == null)
             throw new NotFoundException();
         if (user.IsEmailVerified)
             throw new AlreadyVerifiedException();
 
-        var activationToken = new ActivationToken
-        {
-            Token = new Guid(),
-            User = user,
-            UserId = dto.userId,
-            Expires = DateTime.UtcNow.AddHours(1)
-        };
+        var token = Guid.NewGuid();
 
-        await activationTokenRepository.AddAsync(activationToken);
+        var key = $"activation_token:{user.Id}:{token}";
+        await ActionTokenRepository.AddAsync(key, token.ToString());
 
-        string activationLink = 
-            $"{configuration["server"]}/auth/activate" +
-            $"?token={activationToken.Token}&email={user.Email}";
+        string activationLink =
+            $"{configuration["server"]}/api/auth/activate-email" +
+            $"?token={token}&email={user.Email}";
 
         string subject = "Activate Your Account";
         string body = $"<h1>Welcome to URL Hub!</h1>" +
@@ -125,18 +157,17 @@ public class AuthService(
     {
         var user = await userRepository.GetByEmailAsync(dto.email);
         if (user == null)
-        {
             throw new NotFoundException("no user found with this Email");
-        }
         if (user.IsEmailVerified)
-        {
             throw new AlreadyVerifiedException("user is already verified");
-        }
+        if (user.AuthScheme != AuthScheme.UrlHub)
+            throw new InvalidInputException("Cannot activate users authenticated via external providers.");
 
-        var activationToken = await activationTokenRepository.GetByUserIdAsync(user.Id, dto.token);
-        if (activationToken == null)
+        var key = $"activation_token:{user.Id}:{dto.token}";
+        var activationToken = await ActionTokenRepository.GetToken(key);
+        if (string.IsNullOrEmpty(activationToken))
         {
-            throw new InvalidInputException("Not a valid activationToken");
+            throw new InvalidInputException("Not a valid ActionToken");
         }
 
         user.IsEmailVerified = true;

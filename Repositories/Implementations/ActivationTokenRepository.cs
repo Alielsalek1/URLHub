@@ -2,41 +2,31 @@
 using Microsoft.EntityFrameworkCore;
 using URLshortner.Models;
 using URLshortner.Repositories.Interfaces;
+using StackExchange.Redis;
+using System.Text.Json;
+using Microsoft.AspNetCore.DataProtection.KeyManagement.Internal;
 
 namespace URLshortner.Repositories.Implementations;
 
-public class ActivationTokenRepository(AppDbContext context) : IActivationTokenRepository
+public class ActionTokenRepository : IActionTokenRepository
 {
-    public async Task AddAsync(ActivationToken activationToken)
-    {
-        var user = await context.Users.
-            Include(u => u.ActivationTokens).
-            FirstOrDefaultAsync(u => u.Id == activationToken.UserId);
+    private readonly IDatabase cache;
+    private readonly IConfiguration configuration;
 
-        user.ActivationTokens.Add(activationToken);
-        await context.SaveChangesAsync();
+    public ActionTokenRepository(IConnectionMultiplexer redis, IConfiguration configuration)
+    {
+        cache = redis.GetDatabase();
+        this.configuration = configuration;
     }
 
-    public async Task DeleteAsync(ActivationToken activationToken)
+    public async Task AddAsync(string tokenKey, string token)
     {
-        var user = await context.Users.
-            Include(u => u.ActivationTokens).
-            FirstOrDefaultAsync(u => u.Id == activationToken.UserId);
-        user.ActivationTokens.Remove(activationToken);
-        await context.SaveChangesAsync();
+        await cache.StringSetAsync(tokenKey, token, TimeSpan.FromMinutes(configuration.GetValue<int>("Redis:ActivationTokenLifetimeInMinutes")));
     }
 
-    public async Task<ActivationToken> GetByUserIdAsync(int userId, string token)
+    public async Task<string> GetToken(string tokenKey)
     {
-        var user = await context.Users.
-            Include(u => u.ActivationTokens).
-            FirstOrDefaultAsync(u => u.Id == userId);
-
-        if (!Guid.TryParse(token, out Guid tokenGuid)) 
-        {
-            return null;
-        }
-
-        return user.ActivationTokens.FirstOrDefault(at => at.Token == tokenGuid);
+        var token = await cache.StringGetAsync(tokenKey);
+        return token;
     }
 }

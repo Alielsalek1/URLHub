@@ -68,6 +68,12 @@ public class GlobalExceptionHandler : IExceptionHandler
                 Detail = exception.Message,
                 Status = StatusCodes.Status401Unauthorized
             },
+            NotEmailVerifiedException => new ProblemDetails
+            {
+                Title = "Email Not Verified",
+                Detail = exception.Message,
+                Status = StatusCodes.Status403Forbidden
+            },
             _ => new ProblemDetails
             {
                 Title = "Internal Server Error",

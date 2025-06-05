@@ -23,6 +23,7 @@ using System.Net;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.CookiePolicy;
+using StackExchange.Redis;
 
 // TODO: Unit Testing
 // TODO: Task to delete activation tokens
@@ -45,7 +46,7 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserFriendRepository, UserFriendRepository>();
 builder.Services.AddScoped<IUrlRepository, UrlRepository>();
 builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
-builder.Services.AddScoped<IActivationTokenRepository, ActivationTokenRepository>();
+builder.Services.AddScoped<IActionTokenRepository, ActionTokenRepository>();
 
 // Add Services
 builder.Services.AddScoped<ITokenService, TokenService>();
@@ -74,6 +75,13 @@ builder.Services.AddFluentEmail(builder.Configuration["EmailSettings:From"])
             builder.Configuration["EmailSettings:SmtpPass"]
         )
     });
+
+// Add Redis Cache
+builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+{
+    var configuration = ConfigurationOptions.Parse(builder.Configuration["Redis:ConnectionString"]);
+    return ConnectionMultiplexer.Connect(configuration);
+});
 
 // Authenticaion
 builder.Services.AddAuthentication(options =>

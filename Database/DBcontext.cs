@@ -29,20 +29,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             .HasForeignKey<RefreshToken>(rt => rt.UserId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // one-to-many Relationship: User -> ActivationToken
-        modelBuilder.Entity<User>()
-            .HasMany(u => u.ActivationTokens)
-            .WithOne(at => at.User)
-            .HasForeignKey(at => at.UserId)
-            .OnDelete(DeleteBehavior.Cascade);
 
         // configure RefreshToken Join Table
         modelBuilder.Entity<RefreshToken>()
             .HasKey(rt => rt.UserId);
-
-        // configure ActivationToken Join Table
-        modelBuilder.Entity<ActivationToken>()
-            .HasKey(at => at.Token);
 
         // Configure MappedUrl table
         modelBuilder.Entity<MappedUrl>()

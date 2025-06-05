@@ -8,7 +8,7 @@ namespace URLshortner.Controllers;
 
 [Authorize]
 [ApiController]
-[Route("url")]
+[Route("api/url")]
 public class UrlController(IUrlService urlService) : ControllerBase
 {
     [HttpGet("user/{id}")]
