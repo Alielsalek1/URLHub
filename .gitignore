@@ -17,3 +17,6 @@ Thumbs.db
 .bin
 
 dump.rdb
+
+# VS Code workspace settings
+.vscode/

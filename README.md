@@ -11,29 +11,35 @@ URL Hub is a URL shortening service built using **ASP.NET Core** and **SQL Serve
 A Postman collection has been created to interact with the API. Below is a summary of the key API endpoints:
 
 ### Authentication
-- **Register**: `POST /auth/register` - Create a new user
-- **Login**: `POST /auth/login` - Authenticate and obtain a token
-- **Refresh Token**: `POST /auth/refresh` - Refresh the authentication token
-- **Activate Account**: `GET /auth/activate` - Validate email using activation token
+- **Register**: `POST /api/auth/register` - Create a new user
+- **Login**: `POST /api/auth/login` - Authenticate and obtain JWT + refresh token
+- **Refresh Token**: `POST /api/auth/refresh` - Refresh the access token
+- **External Login (OAuth2)**: `GET /api/auth/externallogin` - Redirects to Google for authentication
+- **External Login Callback**: `GET /api/auth/externallogincallback` - Handle Google response and return tokens
+- **Request Password Reset**: `POST /api/auth/request-reset-password` - Send a password-reset email link
+- **Reset Password**: `POST /api/auth/reset-password` - Submit new password along with reset token
+- **Request Activation Email**: `POST /api/auth/request-activate-email` - Send account activation link
+- **Activate Account**: `POST /api/auth/activate-email?token={token}&email={email}` - Activate user via token
 
 ### User Management
-- **Get My Data**: `GET /user/me` - Retrieve user profile data
-- **Update Profile**: `PUT /user/me` - Update username
+- **Get My Profile**: `GET /api/user/me` - Retrieve current user profile
+- **Update My Profile**: `PUT /api/user/me` - Update username or other profile details
 
 ### URL Management
-- **Create Shortened URL**: `POST /url/me` - Shorten a new URL
-- **Delete URL**: `DELETE /url/me` - Remove a shortened URL
-- **Get User URLs**: `GET /url/user/{id}` - Fetch paginated URLs of a user
-- **Redirect**: `GET /url/{shortCode}` - Redirect to the original URL
+- **Create Shortened URL**: `POST /api/url/me` - Shorten a new URL for the authenticated user
+- **Delete URL**: `DELETE /api/url/me` - Remove a shortened URL (provide `url` in body)
+- **Get User URLs**: `GET /api/url/user/{id}?pageNumber={n}&pageSize={m}` - Fetch paginated URLs for any user
+- **Redirect**: `GET /api/url/{shortCode}` - Redirect to the original long URL
 
 ### Friends System
-- **Add Friend**: `POST /friend/{userId}` - Add another user as a friend
-- **List Friends**: `GET /friend` - Retrieve a list of friends
+- **Add Friend**: `POST /api/friend/{id}` - Add another user as a friend
+- **List My Friends**: `GET /api/friend/me?pageNumber={n}&pageSize={m}` - Retrieve paginated list of friends
+- **Remove Friend**: `DELETE /api/friend/{id}` - Remove a friend by their user ID
 
 ## Installation & Setup
 
 ### Prerequisites
-- [.NET 9 SDK](https://dotnet.microsoft.com/download)
+- [.NET 8 SDK](https://dotnet.microsoft.com/download)
 - [SQL Server](https://www.microsoft.com/en-us/sql-server/sql-server-downloads)
 - [Postman](https://www.postman.com/) (optional for API testing)
 
@@ -50,9 +56,12 @@ Configure these settings in `appsettings.json`:
         "EmailSettings": {
           "From": "your-email@domain.com",
           "SmtpHost": "smtp.gmail.com",
-          "SmtpPort": 587,
+          "SmtpPort": 587
         },
-        "Server": "https://localhost:7005",
+        "Redis": {
+          "ConnectionString": "localhost:6379"
+        },
+        "Server": "https://localhost:7005"
    }
    ```
 
@@ -61,10 +70,11 @@ Use User Secrets for:
    ```json
       "Jwt:Key": "YOUR_SECURE_JWT_SECRET_KEY",
       "EmailSettings:SmtpUser": "YOUR_EMAIL_USERNAME",
-      "EmailSettings:SmtpPass": "YOUR_EMAIL_APP_PASSWORD"
+      "EmailSettings:SmtpPass": "YOUR_EMAIL_APP_PASSWORD",
+      "Redis:ConnectionString": "localhost:6379",
       "ConnectionStrings": {
          "DefaultConnection": "Server=YOUR_SERVER;Database=URLHubDb;Trusted_Connection=True;MultipleActiveResultSets=true"
-        }
+      }
    ```
 
 **Mandatory Configuration:**
@@ -80,6 +90,10 @@ Use User Secrets for:
 
 3. **Database**:
    - Configure SQL Server connection string in `DefaultConnection`
+
+4. **Redis**:
+   - Set `Redis:ConnectionString` to your Redis server (e.g., `localhost:6379`)
+   - Ensure Redis is running before starting the API
 
 ## Run the API
 1. **Clone Repository**
@@ -103,8 +117,4 @@ Use User Secrets for:
 
 ## Testing the API
 - Import the provided Postman collection and test the endpoints.
-<<<<<<< Updated upstream
 - Use the Bearer Token for authenticated endpoints.
-=======
-- Use the Bearer Token for authenticated endpoints.
->>>>>>> Stashed changes

@@ -37,4 +37,10 @@
     <Folder Include="Migrations\" />
   </ItemGroup>
 
+  <!-- Add project references for Clean Architecture layers -->
+  <ItemGroup>
+    <ProjectReference Include="..\Domain\URLshortner.Domain.csproj" />
+    <ProjectReference Include="..\Application\URLshortner.Application.csproj" />
+    <ProjectReference Include="..\Infrastructure\URLshortner.Infrastructure.csproj" />
+  </ItemGroup>
 </Project>
