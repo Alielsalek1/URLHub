@@ -42,6 +42,7 @@ A Postman collection has been created to interact with the API. Below is a summa
 - [.NET 8 SDK](https://dotnet.microsoft.com/download)
 - [SQL Server](https://www.microsoft.com/en-us/sql-server/sql-server-downloads)
 - [Postman](https://www.postman.com/) (optional for API testing)
+- [Redis Server](https://github.com/redis/redis)
 
 ### Configuration
 Configure these settings in `appsettings.json`:
